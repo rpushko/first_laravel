@@ -24,8 +24,55 @@ Route::group(['prefix' => 'tasks'], function () {
     Route::get('/create', function () {
         return view('tasks.create');
     })->name('tasks.create');
-    Route::post('/', function () {
+    Route::post('/', function (\Illuminate\Http\Request $request) {
+    $validator=Validator::make($request->all(),[
+        'name'=>'required|max:5',
+    ]);
+
+    if($validator->fails()){
+        return redirect(route('tasks.create'))
+            ->withInput()
+            ->withErrors($validator);
+    }
+//    $task=new \App\Task();
+//    $task->name=$request->name;
+//    $task->save();
+    \App\Task::create(['name'=>$request->name]);
+    return redirect (route('tasks.list'));
     })->name('tasks.store');
-    Route::delete('/{task}', function () {
+
+
+    Route::delete('/{task}', function (\App\Task $task) {
+        $task->delete();
+        return redirect (route('tasks.list'));
     })->name('tasks.destroy');
+
+//    Route::get('/edit', function () {
+//        return redirect(route('tasks.edit'));
+//    })->name('tasks.edit');
+//
+//    Route::put('/{task}', function (\App\Task $task){
+//        $task->update();
+//        return redirect (route('tasks.list'));
+//    })->name('tasks.update');
+Route::get('/{task}/edit',function (\App\Task $task){
+    return view('tasks.edit',['task'=>$task]);
+})->name('tasks.edit');
+
+Route::put('/{task}',function (\Illuminate\Http\Request $request,\App\Task $task) {
+    $validator = Validator::make($request->all(), [
+        'name' => 'required|max:5',
+    ]);
+
+    if ($validator->fails()) {
+        return redirect(route('tasks.edit',$task->id))
+            ->withInput()
+            ->withErrors($validator);
+    }
+
+    $task->name = $request->name;
+    $task->save();
+    return redirect(route('tasks.list'));
+})->name('tasks.update');
 });
+
